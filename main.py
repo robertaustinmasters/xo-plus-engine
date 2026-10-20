@@ -6,19 +6,26 @@ import httpx
 from datetime import datetime, timezone
 
 app = FastAPI(
-    title="U4U Universal Bridge Server - Omega Edition",
-    version="4.1.0",
-    description="Compliant routing engine for Stripe treasury sweeps and mesh telemetry."
+    title="Masters Megawin Engine - Cloud Infrastructure Edition",
+    version="3.5.0-PRODUCTION",
+    description="Unified backend architecture for multi-client routing, Stripe treasury sweeps, and Revcast telemetry."
 )
-router = APIRouter(prefix="/api/v1/treasury", tags=["Omega Sweep Execution"])
+router = APIRouter(prefix="/api/v1/treasury", tags=["Compliant Master Sweep Execution"])
 
-# Sovereign Target & Compliance Parameters
+# System Configurations
 VENMO_OFFRAMP_TARGET = "@Skinny3388"
 COMPLIANT_TRANSACTION_LIMIT = 3000.00
 
-# Production Credentials via Environment Variables (Render Secrets)
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-STRIPE_DESTINATION_ACCOUNT = os.getenv("STRIPE_DESTINATION_ACCOUNT", "acct_1TSdaoQbxBQqicTC")
+# Stripe Configuration & Credentials
+stripe.api_key = os.getenv(
+    "STRIPE_SECRET_KEY", 
+    "sk_test_51TWrrH5gDDO0MtZ6hFudoP9Tdn5MUUwK16Ql0kr7b4b3yxu0hCLxt4hgqkrAWzmgC9Fv32ixZA5xqEbCLIqt6Et400AYiLzVmS"
+)
+STRIPE_DESTINATION_ACCOUNT = os.getenv(
+    "STRIPE_DESTINATION_ACCOUNT", 
+    "acct_1TSdaoQbxBQqicTC"
+)
+
 REVCAST_API_URL = "https://api.revcast.com/v1/telemetry/events"
 REVCAST_API_KEY = os.getenv("REVCAST_API_KEY", "YOUR_REVCAST_INTEGRATION_KEY")
 OPERATOR_TOKEN = os.getenv("OPERATOR_JWT_TOKEN", "YOUR_OPERATOR_TOKEN")
@@ -34,7 +41,7 @@ async def broadcast_to_revcast(event_type: str, data: dict):
             pass
 
 async def auth_guard(authorization: str = Header(...)):
-    """Verifies the dynamic operator token."""
+    """Verifies the dynamic operator JWT token."""
     expected_header = f"Bearer {OPERATOR_TOKEN}"
     if authorization != expected_header:
         raise HTTPException(status_code=401, detail="Unauthorized Operator")
@@ -42,10 +49,10 @@ async def auth_guard(authorization: str = Header(...)):
 
 @router.get("/")
 async def health_check():
-    """Uptime health check endpoint."""
+    """Health check endpoint for Render uptime monitoring."""
     return {
         "status": "online",
-        "system": "U4U Universal Bridge Server - Omega Edition",
+        "system": "Masters Megawin Engine",
         "destination_account": STRIPE_DESTINATION_ACCOUNT,
         "batch_limit": COMPLIANT_TRANSACTION_LIMIT,
         "offramp": VENMO_OFFRAMP_TARGET
@@ -63,6 +70,7 @@ async def execute_compliant_sweep(
     if requested_amount <= 0:
         raise HTTPException(status_code=400, detail="Requested amount must be greater than zero.")
         
+    # Enforce batch threshold
     processing_amount = min(requested_amount, COMPLIANT_TRANSACTION_LIMIT)
     
     try:
@@ -100,6 +108,7 @@ async def execute_compliant_sweep(
 
 app.include_router(router)
 
+# Cloud Deployment Port Binding
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run("main:app", host="0.0.0.0", port=port)

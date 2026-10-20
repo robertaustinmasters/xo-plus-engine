@@ -28,7 +28,7 @@ STRIPE_DESTINATION_ACCOUNT = os.getenv(
 
 REVCAST_API_URL = "https://api.revcast.com/v1/telemetry/events"
 REVCAST_API_KEY = os.getenv("REVCAST_API_KEY", "YOUR_REVCAST_INTEGRATION_KEY")
-OPERATOR_TOKEN = os.getenv("OPERATOR_JWT_TOKEN", "YOUR_OPERATOR_TOKEN")
+OPERATOR_TOKEN = os.getenv("OPERATOR_JWT_TOKEN", "YOUR_OPERATOR_JWT_TOKEN")
 
 async def broadcast_to_revcast(event_type: str, data: dict):
     """Pipes background telemetry to the Revcast engine."""
@@ -70,11 +70,9 @@ async def execute_compliant_sweep(
     if requested_amount <= 0:
         raise HTTPException(status_code=400, detail="Requested amount must be greater than zero.")
         
-    # Enforce batch threshold
     processing_amount = min(requested_amount, COMPLIANT_TRANSACTION_LIMIT)
     
     try:
-        # Transmit transfer payload to Stripe API
         stripe.Transfer.create(
             amount=int(processing_amount * 100),  # Amount in cents
             currency="usd",
@@ -82,7 +80,6 @@ async def execute_compliant_sweep(
             description=f"Compliant Mesh Transfer to {VENMO_OFFRAMP_TARGET}"
         )
         
-        # Log execution event to Revcast telemetry
         background_tasks.add_task(
             broadcast_to_revcast,
             event_type="compliant_sweep_executed",
@@ -108,7 +105,6 @@ async def execute_compliant_sweep(
 
 app.include_router(router)
 
-# Cloud Deployment Port Binding
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run("main:app", host="0.0.0.0", port=port)
